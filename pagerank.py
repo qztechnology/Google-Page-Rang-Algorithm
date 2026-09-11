@@ -4,7 +4,7 @@ import re
 import sys
 
 DAMPING = 0.85
-SAMPLES = 10000
+SAMPLES = 10 #10000 TODO: set 10000
 
 
 def main():
@@ -13,7 +13,7 @@ def main():
     corpus = crawl(sys.argv[1])
     
     #------------ TEST AREA -------------#
-    page = "2.html"
+    #page = "2.html"
     #print(transition_model(corpus, page, DAMPING))
     #------------- END TEST AREA -------------#
     
@@ -97,13 +97,26 @@ def sample_pagerank(corpus, damping_factor, n):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    if n >= 1:    
-        sample = 1
-        #while sample <= n:
-        if sample == 1:
+    sample = {}
+    
+    # Ensure n is at least 1
+    if n < 1:
+        n = 1
+            
+    counter = 1
+    while counter <= n:
+        
+        # The first page is random
+        if counter == 1:
             page = random.choice(list(corpus.keys()))
-            print(transition_model(corpus,page,damping_factor))
-        #sample += 1
+            sample = transition_model(corpus,page,damping_factor)
+            print(sample)
+        else:
+            for page in corpus.keys():
+                sample = transition_model(corpus,page,damping_factor)
+        counter += 1
+        
+            
 
 
 def iterate_pagerank(corpus, damping_factor):
