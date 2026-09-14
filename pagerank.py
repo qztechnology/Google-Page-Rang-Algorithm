@@ -4,7 +4,7 @@ import re
 import sys
 
 DAMPING = 0.85
-SAMPLES = 5 #10000 TODO: set 10000
+SAMPLES = 10000 #10000 TODO: set 10000
 
 
 def main():
@@ -68,25 +68,25 @@ def transition_model(corpus, page, damping_factor):
     n_page_links = len(corpus[page])
     
     # Transition model function
-    _transition_model = dict()
+    tm = {}
     
     # Random page probability
-    p_random_page = (1 - damping_factor)/n_pages
-    _transition_model[page] = round(p_random_page, 4)
+    p_random_page = (1 - damping_factor) / n_pages
+    tm[page] = p_random_page
     
     # Random link probability
-    p_random_link = round(damping_factor / n_page_links, 4)
+    if n_page_links != 0: p_random_link = damping_factor / n_page_links
     
     # Check the probability based on the current page
     for p in corpus:
         if p not in corpus[page]:
-            _transition_model[p] = p_random_page
+            tm[p] = p_random_page
         elif p == page:
-            _transition_model[p] = p_random_page
+            tm[p] = p_random_page
         else:
-            _transition_model[p] = p_random_link + p_random_page
+            tm[p] = p_random_link + p_random_page
             
-    return _transition_model
+    return tm
 
 
 def sample_pagerank(corpus, damping_factor, n):
@@ -103,58 +103,71 @@ def sample_pagerank(corpus, damping_factor, n):
     if n < 1:
         n = 1
         
+    # Initializzations
     page_counter = {}
-    tm_1 = 0
+    tm = {}
     next_page = ""
     pr = 0
+    page_rank = {}
     
     n_pages = len(corpus)
+    
+    for page in corpus.keys():
+        page_counter.update({page: 0})
+        
+    for page in corpus.keys():
+        page_rank.update({page: 0})
+        
+    print(f"page counter: {page_counter}")
             
     counter = 1
     while counter <= n:
         
         # The first page is random
         if counter == 1:
+            
             # Choose the first page
-            page = random.choice(list(corpus.keys()))
-            page_counter.setdefault(page, 1)
-            print(f"First random page: {page}")
-            tm_1 = transition_model(corpus, page, damping_factor)
+            first_page = random.choice(list(corpus.keys()))
+            page_counter[first_page] += 1
+
+            tm = transition_model(corpus, first_page, damping_factor)
             
-            # Get the new page based on the PR's
-            pages = list(tm_1.keys())
-            values = list(tm_1.values())
+            # Get the next page based on the current transition model
+            pages = list(tm.keys())
+            values = list(tm.values())
             next_page = random.choices(pages, weights=values, k=1)[0]
-            print(f"tm_1: {tm_1}")
+      
+        elif counter >= 2:
             
-            page_counter.setdefault(next_page, 1)
-        
-            print(f"page_counter 1: {page_counter}")
-        
+            tm = transition_model(corpus, next_page, damping_factor)
+            
+            # Get the new page based on the new PR's
+            pages = list(tm.keys())
+            values = list(tm.values())
+            next_page = random.choices(pages, weights=values, k=1)[0]
+            
+            print(f"next_page: {next_page}")
+            print(f"tm: {tm}")
+            print(f"page counter 2: {page_counter}")
+            
+            # Increase page counter
+            page_counter[next_page] += 1
+            
+            # Calculate PR
+            pr = page_counter[next_page] / n
+            new_record = {next_page: pr}
+            page_rank.update(new_record)
+            
+            
+            print(f"page counter: {page_counter}")
+            print(f"new_record: {new_record}")
+            print(f"page_rank: {page_rank}")
         else:
-            if counter >= 2:
-                tm = transition_model(corpus, next_page, damping_factor)
-                
-                # Get the new page based on the new PR's
-                pages = list(tm.keys())
-                values = list(tm.values())
-                next_page = random.choices(pages, weights=values, k=1)[0]
-                print(f"next_page: {next_page}")
-                print(f"tm: {tm}")
-                page_counter.setdefault(next_page)
-                
-                # Increase page counter
-                if page_counter[next_page] == None:
-                    cnt = 1
-                else:
-                    cnt = page_counter[next_page]
-                    cnt += 1 
-                
-                page_counter[next_page] = cnt
-                print(f"page counter: {page_counter}")
-            
-                    
+            raise ("Counter Error")
+                      
         counter += 1
+        
+    return dict(sorted(page_rank.items()))
         
             
 def iterate_pagerank(corpus, damping_factor):
