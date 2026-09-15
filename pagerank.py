@@ -148,7 +148,7 @@ def sample_pagerank(corpus, damping_factor, n):
             
             # Calculate PR
             pr = page_counter[next_page] / n
-            new_record = {next_page: pr}
+            new_record = {next_page: pr} #TODO: check why i cannot put directly the key:value in the dictionary
             page_rank.update(new_record)
 
         else:
@@ -168,9 +168,8 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    iterations = 0
-    pr_exit_range = 0.001
     links = {}
+    pr = {}
     pr_i = 0
     page_rank_previous = 0
     n_pages = len(corpus)
@@ -183,17 +182,26 @@ def iterate_pagerank(corpus, damping_factor):
     
     # Calculate PR(i)
     for page in corpus:
-        page_links = {page: len(corpus[page])}
+        n_links = len(corpus[page])
+        page_links = {page: n_links} #TODO: check why i cannot put directly the key:value in the dictionary
         links.update(page_links)
         
         # Pages iterations
+        pr_exit_range = 0.001
+        first_cycle = 0
         while pr_exit_range >= 0.001: 
-            if iterations == 0:
-                pr_i = (damping_factor * page_rank) / len(corpus[page])
-                iterations += 1
-                print(f"pr_i: {pr_i}")
-            else: 
-                pr_i = (damping_factor * pr_i) / len(corpus[page])
+            if n_links == 0:
+                if first_cycle == 0:
+                    pr_i = (damping_factor * page_rank) / n_pages
+                    first_cycle += 1
+                else:
+                    pr_i = (damping_factor * pr_i) / n_pages
+            elif n_links > 0:
+                if first_cycle == 0:
+                    pr_i = (damping_factor * page_rank) / n_links
+                    first_cycle += 1
+                else:
+                    pr_i = (damping_factor * pr_i) / n_links
             
             # Total PR(p) calculation
             page_rank =  pr_random_page + pr_i
@@ -202,17 +210,12 @@ def iterate_pagerank(corpus, damping_factor):
             pr_exit_range = abs(page_rank_previous - page_rank)
             page_rank_previous = page_rank
             
-            print(f"page_rank page {page}: {page_rank} - pr_exit_range: {pr_exit_range:.4f}")
-
-                        
+            print(f"page_rank page {page}: {page_rank} - pr_random_page: {pr_random_page} - pr_i: {pr_i} - pr_exit_range: {pr_exit_range:.4f}")
         
-        
-            
-            
-def page_rank_link(damping_factor, n_links):
-    pr_i = (damping_factor * page_rank_link(damping_factor, n_links)) / n_links
-    print(f"PR(i): {pr_i}")
-    return pr_i
+        pr.update({page: page_rank})
+    
+    return pr
+    
     
 
 
