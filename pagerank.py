@@ -110,16 +110,13 @@ def sample_pagerank(corpus, damping_factor, n):
     pr = 0
     page_rank = {}
     
-    n_pages = len(corpus)
-    
     for page in corpus.keys():
         page_counter.update({page: 0})
         
     for page in corpus.keys():
         page_rank.update({page: 0})
-        
-    print(f"page counter: {page_counter}")
-            
+       
+    # Sampling cycle     
     counter = 1
     while counter <= n:
         
@@ -146,10 +143,6 @@ def sample_pagerank(corpus, damping_factor, n):
             values = list(tm.values())
             next_page = random.choices(pages, weights=values, k=1)[0]
             
-            print(f"next_page: {next_page}")
-            print(f"tm: {tm}")
-            print(f"page counter 2: {page_counter}")
-            
             # Increase page counter
             page_counter[next_page] += 1
             
@@ -157,11 +150,7 @@ def sample_pagerank(corpus, damping_factor, n):
             pr = page_counter[next_page] / n
             new_record = {next_page: pr}
             page_rank.update(new_record)
-            
-            
-            print(f"page counter: {page_counter}")
-            print(f"new_record: {new_record}")
-            print(f"page_rank: {page_rank}")
+
         else:
             raise ("Counter Error")
                       
@@ -179,7 +168,52 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    raise NotImplementedError
+    iterations = 0
+    pr_exit_range = 0.001
+    links = {}
+    pr_i = 0
+    page_rank_previous = 0
+    n_pages = len(corpus)
+    
+    print(f"n pagess: {n_pages}")
+    
+    # PR(p) function
+    page_rank = 1 / n_pages
+    pr_random_page = (1 - damping_factor) / n_pages
+    
+    # Calculate PR(i)
+    for page in corpus:
+        page_links = {page: len(corpus[page])}
+        links.update(page_links)
+        
+        # Pages iterations
+        while pr_exit_range >= 0.001: 
+            if iterations == 0:
+                pr_i = (damping_factor * page_rank) / len(corpus[page])
+                iterations += 1
+                print(f"pr_i: {pr_i}")
+            else: 
+                pr_i = (damping_factor * pr_i) / len(corpus[page])
+            
+            # Total PR(p) calculation
+            page_rank =  pr_random_page + pr_i
+            
+            # Exit conditions 
+            pr_exit_range = abs(page_rank_previous - page_rank)
+            page_rank_previous = page_rank
+            
+            print(f"page_rank page {page}: {page_rank} - pr_exit_range: {pr_exit_range:.4f}")
+
+                        
+        
+        
+            
+            
+def page_rank_link(damping_factor, n_links):
+    pr_i = (damping_factor * page_rank_link(damping_factor, n_links)) / n_links
+    print(f"PR(i): {pr_i}")
+    return pr_i
+    
 
 
 if __name__ == "__main__":
