@@ -170,60 +170,66 @@ def iterate_pagerank(corpus, damping_factor):
     """
     links = {}
     pr = {}
+    pr_new = {}
+    pr_previous = {}
+    pr_exit_range = {}
     n_pages = len(corpus)
-    first_cycle = 0
     
-    initial_page_rank = 1 / n_pages
-    pr_random_page = (1 - damping_factor) / n_pages #TODO: check this: (damping_factor/n_pages)
+    initial_page_rank = 1 / n_pages # {k: 1/N for k in corpus}
+    pr_random_page = (1 - damping_factor) / n_pages
     
     for page in corpus:
         pr.update({page: initial_page_rank})
+        pr_previous.update({page: initial_page_rank})
         
     # Pages iterations
-    exit_range = float('inf')
+    exit_range = 0
+    exit_condition = False
     
-    while exit_range > 0.001: 
-
+    while exit_condition == False: 
+        
+        # Cycle between pages in corpus
         for page in corpus:
             n_links = len(corpus[page])
             page_links = {page: n_links}
-            links.update(page_links)
-            page_rank_previous = 0
-            page_rank = 0
-            pr_i = initial_page_rank
+            links.update(page_links)            
+            page_rank = 0    
             sum_links = 0 # PR(i) / NumLinks(i)
 
             # PR(i) calculation
-            for i in corpus[page]:
-                print(f'page: {page} - link to {page}: {len(corpus[page])} - i: {i} - links of "i": {corpus[i]} - NumLinks(i): {len(corpus[i])}') 
-                num_links_i = len(corpus[i])
-
-
+            for i in corpus[page]: # For every page "i" that links to page "page"
                 
-                if num_links_i == 0:
-                    if first_cycle == 0:
-                        sum_links += initial_page_rank / n_pages
-                        first_cycle += 1
-                    else:
-                        sum_links += pr[i] / n_pages
-                elif num_links_i > 0:
-                    if first_cycle == 0:
-                        sum_links += initial_page_rank / num_links_i
-                        first_cycle += 1
-                    else:
-                        sum_links += pr_i / num_links_i
+                if page in corpus[i]:
+                    
+                    print(f'page: {page} - link to {page}: {len(corpus[page])} - i: {i} - links of "i": {corpus[i]} - NumLinks(i): {len(corpus[i])}') 
+                    num_links_i = len(corpus[i])
+
+                    # If links of the page are 0, the probabilities are divided between all pages
+                    if num_links_i == 0:
+                            sum_links +=  pr_previous[i] / n_pages
+                    elif num_links_i > 0:
+                            sum_links += pr_previous[i] / num_links_i #pr_previous[i] / num_links_i
                         
             # Get PageRank for a specific page and pages that links to it
             page_rank += pr_random_page + damping_factor * sum_links
+            print(f'page_rank: {page_rank}')
             
             # Store PageRank for each page
             pr.update({page: page_rank})
             
             # Exit conditions 
-            exit_range = abs(page_rank_previous - page_rank)
+            exit_range = abs(pr_previous[page] - pr[page])
+            pr_exit_range.update({page: exit_range})
             page_rank_previous = page_rank
-
-            print(f'pr: {pr}')
+            pr_previous.update({page: page_rank_previous})
+            
+            print(f'exit_range: {exit_range}')
+            print(f'Sum of pageranks: {sum(pr.values())}')
+            
+            if exit_range < 0.001:
+                exit_condition = True
+                print(f'EXIT CONDITION')
+            
 
     return pr
     
