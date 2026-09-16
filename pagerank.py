@@ -170,50 +170,61 @@ def iterate_pagerank(corpus, damping_factor):
     """
     links = {}
     pr = {}
-    pr_i = 0
-    page_rank_previous = 0
     n_pages = len(corpus)
+    first_cycle = 0
     
-    print(f"n pagess: {n_pages}")
+    initial_page_rank = 1 / n_pages
+    pr_random_page = (1 - damping_factor) / n_pages #TODO: check this: (damping_factor/n_pages)
     
-    # PR(p) function
-    page_rank = 1 / n_pages
-    pr_random_page = (1 - damping_factor) / n_pages
-    
-    # Calculate PR(i)
     for page in corpus:
-        n_links = len(corpus[page])
-        page_links = {page: n_links} #TODO: check why i cannot put directly the key:value in the dictionary
-        links.update(page_links)
+        pr.update({page: initial_page_rank})
         
-        # Pages iterations
-        pr_exit_range = 0.001
-        first_cycle = 0
-        while pr_exit_range >= 0.001: 
-            if n_links == 0:
-                if first_cycle == 0:
-                    pr_i = (damping_factor * page_rank) / n_pages
-                    first_cycle += 1
-                else:
-                    pr_i = (damping_factor * pr_i) / n_pages
-            elif n_links > 0:
-                if first_cycle == 0:
-                    pr_i = (damping_factor * page_rank) / n_links
-                    first_cycle += 1
-                else:
-                    pr_i = (damping_factor * pr_i) / n_links
+    # Pages iterations
+    exit_range = float('inf')
+    
+    while exit_range > 0.001: 
+
+        for page in corpus:
+            n_links = len(corpus[page])
+            page_links = {page: n_links}
+            links.update(page_links)
+            page_rank_previous = 0
+            page_rank = 0
+            pr_i = initial_page_rank
+            sum_links = 0 # PR(i) / NumLinks(i)
+
+            # PR(i) calculation
+            for i in corpus[page]:
+                print(f'page: {page} - link to {page}: {len(corpus[page])} - i: {i} - links of "i": {corpus[i]} - NumLinks(i): {len(corpus[i])}') 
+                num_links_i = len(corpus[i])
+
+
+                
+                if num_links_i == 0:
+                    if first_cycle == 0:
+                        sum_links += initial_page_rank / n_pages
+                        first_cycle += 1
+                    else:
+                        sum_links += pr[i] / n_pages
+                elif num_links_i > 0:
+                    if first_cycle == 0:
+                        sum_links += initial_page_rank / num_links_i
+                        first_cycle += 1
+                    else:
+                        sum_links += pr_i / num_links_i
+                        
+            # Get PageRank for a specific page and pages that links to it
+            page_rank += pr_random_page + damping_factor * sum_links
             
-            # Total PR(p) calculation
-            page_rank =  pr_random_page + pr_i
+            # Store PageRank for each page
+            pr.update({page: page_rank})
             
             # Exit conditions 
-            pr_exit_range = abs(page_rank_previous - page_rank)
+            exit_range = abs(page_rank_previous - page_rank)
             page_rank_previous = page_rank
-            
-            print(f"page_rank page {page}: {page_rank} - pr_random_page: {pr_random_page} - pr_i: {pr_i} - pr_exit_range: {pr_exit_range:.4f}")
-        
-        pr.update({page: page_rank})
-    
+
+            print(f'pr: {pr}')
+
     return pr
     
     
