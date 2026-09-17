@@ -168,7 +168,6 @@ def iterate_pagerank(corpus, damping_factor):
     their estimated PageRank value (a value between 0 and 1). All
     PageRank values should sum to 1.
     """
-    links = {}
     pr = {}
     pr_new = {}
     pr_previous = {}
@@ -187,54 +186,56 @@ def iterate_pagerank(corpus, damping_factor):
     exit_condition = False
     
     while exit_condition == False: 
+        pr_new = {}
         
         # Cycle between pages in corpus
         for page in corpus:
-            n_links = len(corpus[page])
-            page_links = {page: n_links}
-            links.update(page_links)            
+            
+            # Reset counters     
             page_rank = 0    
             sum_links = 0 # PR(i) / NumLinks(i)
 
             # PR(i) calculation
-            for i in corpus[page]: # For every page "i" that links to page "page"
+            for i in corpus: # For every page "i" that links to current page
                 
+                num_links_i = len(corpus[i])
                 if page in corpus[i]:
-                    
                     print(f'page: {page} - link to {page}: {len(corpus[page])} - i: {i} - links of "i": {corpus[i]} - NumLinks(i): {len(corpus[i])}') 
-                    num_links_i = len(corpus[i])
-
+                    
                     # If links of the page are 0, the probabilities are divided between all pages
                     if num_links_i == 0:
-                            sum_links +=  pr_previous[i] / n_pages
+                            sum_links +=  pr_previous[i] / n_pages + 1
                     elif num_links_i > 0:
                             sum_links += pr_previous[i] / num_links_i #pr_previous[i] / num_links_i
+                #else:
+                #    sum_links = 0
                         
             # Get PageRank for a specific page and pages that links to it
             page_rank += pr_random_page + damping_factor * sum_links
-            print(f'page_rank: {page_rank}')
             
             # Store PageRank for each page
-            pr.update({page: page_rank})
+            pr_new[page] = page_rank
+            print(f'pr_new: {pr_new} - pr_previous: {pr_previous}')
             
-            # Exit conditions 
-            exit_range = abs(pr_previous[page] - pr[page])
-            pr_exit_range.update({page: exit_range})
-            page_rank_previous = page_rank
-            pr_previous.update({page: page_rank_previous})
+        # Exit conditions 
+        exit_range = max({abs(pr_previous[p]-pr_new[p]) for p in corpus})
+        pr_exit_range.update({page: exit_range})
             
-            print(f'exit_range: {exit_range}')
-            print(f'Sum of pageranks: {sum(pr.values())}')
+        #page_rank_previous = page_rank
+        
+        if exit_range < 0.001:
+            exit_condition = True
+            pr = pr_new
+            print(f'EXIT CONDITION')
+        else:
+            pr_previous = pr_new
+            #pr_previous.update({page: page_rank_previous})
             
-            if exit_range < 0.001:
-                exit_condition = True
-                print(f'EXIT CONDITION')
+        print(f'exit_range: {exit_range}')
+        print(f'Sum of pageranks: {sum(pr_new.values())}')
             
 
     return pr
     
-    
-
-
 if __name__ == "__main__":
     main()
